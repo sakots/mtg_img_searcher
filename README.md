@@ -2,7 +2,7 @@
 MTG Image searcher
 
 ## 何？
-入力された文字列にmtgを加えてyahooで画像検索してサイズがmtg-jp.comのギャラリーから1件返すだけ。
+入力された文字列にmtgを加えてyahooで画像検索してmtg-jp.comのギャラリーから1件返すだけ。
 ![おっぱい](https://github.com/sakots/mtg_img_searcher/blob/master/image.png "サンプル")
 
 ## 使い方
