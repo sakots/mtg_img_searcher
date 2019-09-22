@@ -17,8 +17,8 @@ TOKEN = '自分のBotのアクセストークンに置き換えてください'
 
 def _google_mtgimg_search(word):
 
-    if os.path.exists('img'):
-        shutil.rmtree('./img')
+    #if os.path.exists('img'):
+    #    shutil.rmtree('./img')
     if not os.path.exists('img'):
         os.mkdir('img')
 
@@ -69,6 +69,7 @@ def _google_mtgimg_search(word):
             continue
         except error.URLError:
             continue
+        break
 
 # 接続に必要なオブジェクトを生成
 client = discord.Client()

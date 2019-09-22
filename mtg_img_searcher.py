@@ -34,7 +34,7 @@ def _request(url):
 
 def _yahoo_mtgimg_search(word):
     # yahoo!画像検索の結果から画像を返す
-    url = 'https://search.yahoo.co.jp/image/search?n=1&p={}+site%3Amtg-jp.com+cardImages&vaop=a&fmt=png&dim=&imw=&imh=&imt=&imc=&ctype=&search.x=1'.format(quote(word))
+    url = 'https://search.yahoo.co.jp/image/search?n=1&p={}+gatherer.wizards.com&vaop=a&fmt=png&dim=&imw=&imh=&imt=&imc=&ctype=&search.x=1'.format(quote(word))
     byte_content, _ = _request(url)
     structured_page = BeautifulSoup(byte_content.decode('UTF-8'), 'html.parser')
     img_link_elems = structured_page.find_all('img')
