@@ -12,13 +12,15 @@ google検索バージョンも用意しました。こっちはちょっと重�
 
 ## 使い方
 
+`pip3 install discord bs4 urllib3`
+
 client.run( )の中身を自分のBotのアクセストークンに置き換えてください。以上。
 
 ## こうしんりれき
 
 ### 22/12/22
 
-ver2 画像検索サイトをgatherer.wizards.comとmtg-jp.comにした。
+ver2 ~~画像検索サイトをgatherer.wizards.comとmtg-jp.comにした。~~ 画像サイズ最適化によりおっぱい最適化復活。
 
 ### 19/09/22
 
