@@ -14,7 +14,10 @@ from urllib.parse import quote
 from bs4 import BeautifulSoup
 import discord
 
-client = discord.Client()
+Intents = discord.Intents.default()
+Intents.members = True
+client = discord.Client(intents=Intents)
+
 async def on_ready():
     print('Logged in as')
     print(client.user.name)
@@ -26,8 +29,8 @@ def _request(url):
     req = Request(url)
     try:
         with urlopen(req, timeout=5) as p:
-             b_content = p.read()
-             mime = p.getheader('Content-Type')
+            b_content = p.read()
+            mime = p.getheader('Content-Type')
     except:
         return None, None
     return b_content, mime
