@@ -72,13 +72,17 @@ def _google_mtgimg_search(word):
         break
 
 # 接続に必要なオブジェクトを生成
-client = discord.Client()
+Intents = discord.Intents.default()
+Intents.members = True
+client = discord.Client(intents=Intents)
 
 # 起動時に動作する処理
 @client.event
 async def on_ready():
-    # 起動したらターミナルにログイン通知が表示される
-    print('ログインしました')
+    print('Logged in as')
+    print(client.user.name)
+    print(client.user.id)
+    print('------')
 
 # メッセージ受信時に動作する処理
 @client.event
