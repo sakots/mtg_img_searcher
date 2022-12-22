@@ -23,7 +23,7 @@ def _google_mtgimg_search(word):
         os.mkdir('img')
 
     urlKeyword = parse.quote(word)
-    url = 'https://www.google.com/search?as_st=y&tbm=isch&hl=ja&as_q=' + urlKeyword + '+img_sys&as_epq=&as_oq=&as_eq=&cr=&as_sitesearch=mtg-jp.com&safe=images&tbs=iar:t,ift:png'
+    url = 'https://www.google.com/search?as_st=y&tbm=isch&hl=ja&as_q=' + urlKeyword + '+img_sys+site%3Amtg-jp.com+%7C+site%3Agatherer.wizards.com&as_epq=&as_oq=&as_eq=&cr=&safe=images&tbs=iar:t,ift:png'
 
     headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0",}
     request = req.Request(url=url, headers=headers)
