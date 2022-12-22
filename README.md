@@ -12,7 +12,7 @@ google検索バージョンも用意しました。こっちはちょっと重�
 
 ## 使い方
 
-`pip3 install discord bs4 urllib3`
+`pip3 install discord.py bs4 urllib3`
 
 client.run( )の中身を自分のBotのアクセストークンに置き換えてください。以上。
 
