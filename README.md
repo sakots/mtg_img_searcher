@@ -4,7 +4,7 @@ MTG Image searcher
 
 ## 何？
 
-入力された文字列にmtgを加えてyahooで画像検索してmtg-jp.comのギャラリーから1件返すだけのDiscordBot。
+入力された文字列にmtgとかカードとかを加えて画像検索して1件返すだけのDiscordBot。
 ![マツコ](image.png)
 
 yahoo検索バージョンではおっぱいチャレンジ成功
