@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import discord
 import bs4
 import requests
@@ -10,10 +13,11 @@ import urllib.request, urllib.error
 from urllib import request as req
 from urllib import error
 from urllib import parse
+import requests
 
 
 # 自分のBotのアクセストークンに置き換えてください
-TOKEN = '自分のBotのアクセストークンに置き換えてください'
+TOKEN = os.getenv('TOKEN')
 
 def _google_mtgimg_search(word):
 

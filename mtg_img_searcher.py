@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import argparse
 import json
 import os
@@ -59,4 +62,4 @@ async def on_message(message):
 
             await message.channel.send(m)
 
-client.run("自分のBotのアクセストークンに置き換えてください")
+client.run(os.getenv('TOKEN'))
