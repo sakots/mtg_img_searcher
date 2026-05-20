@@ -5,7 +5,7 @@ MTG Image searcher
 ## 何？
 
 入力された文字列にmtgを加えてyahooで画像検索してmtg-jp.comのギャラリーから1件返すだけのDiscordBot。
-![マツコ](https://github.com/sakots/mtg_img_searcher/blob/master/image.png "サンプル")
+![マツコ](image.png)
 
 yahoo検索バージョンではおっぱいチャレンジ成功
 ![おっぱい](image3.png)
@@ -18,6 +18,8 @@ yahoo検索バージョンではおっぱいチャレンジ成功
 
 起動:
 
+bing版
+
 ```bash
 uv run python main.py
 ```
@@ -27,6 +29,8 @@ yahoo検索版
 ```bash
 uv run python yahoo.py
 ```
+
+好みで使ってください。
 
 ## こうしんりれき
 
