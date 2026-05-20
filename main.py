@@ -36,7 +36,7 @@ async def on_ready():
 
 
 def _bing_mtg_img_urls(command):
-  query = f"{command} (MTG OR マジック OR ギャザ OR magic) カード"
+  query = f"+{command} (MTG OR マジック OR ギャザ OR magic) (カード OR card)"
   params = {
     "q": query,
     "qft": "+filterui:aspect-tall",
