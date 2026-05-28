@@ -12,7 +12,7 @@ yahoo検索バージョンではおっぱいチャレンジ成功
 
 ## 使い方
 
-1. `uv add discord.py bs4 urllib3 python-dotenv requests`
+1. `uv add discord.py bs4 urllib3 python-dotenv requests pillow`
 2. `.env`ファイルを作成し、`TOKEN=(ここにDiscordのBotトークンを入れる)`のように作成してください
 3. Discord Developer Portal の Bot 設定で `MESSAGE CONTENT INTENT` をONにしてください。
 
@@ -31,6 +31,12 @@ uv run python yahoo.py
 ```
 
 好みで使ってください。
+
+## 画像から似ているカードを探す
+
+画像を添付してBotにメンションすると、Scryfallのカード画像から見た目が近いカードを返します。
+
+初回だけ `.cache/scryfall_image_hashes.json` を作るため、Scryfallからカード画像を取得します。時間がかかりますが、2回目以降はキャッシュを使います。キャッシュを作り直したいときは `.cache` を削除してください。
 
 ## こうしんりれき
 

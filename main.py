@@ -8,6 +8,12 @@ import bs4
 import discord
 import requests
 from dotenv import load_dotenv
+from mtg_image_similarity import (
+  download_card_image,
+  find_similar_card,
+  is_image_attachment,
+  read_image_attachment,
+)
 
 
 load_dotenv()
@@ -175,6 +181,28 @@ def download_first_bing_mtg_image(command):
 @client.event
 async def on_message(message):
   if message.author.bot:
+    return
+
+  image_attachments = [attachment for attachment in message.attachments if is_image_attachment(attachment)]
+  if client.user in message.mentions and image_attachments:
+    async with message.channel.typing():
+      try:
+        image_bytes = await read_image_attachment(image_attachments[0])
+        card = await asyncio.to_thread(find_similar_card, image_bytes)
+        if card is not None:
+          result = await asyncio.to_thread(download_card_image, card)
+        else:
+          result = None
+      except (ValueError, requests.RequestException, OSError):
+        result = None
+
+    if result is None:
+      await message.channel.send("似ているカードが見つかりませんでした＞＜")
+      return
+
+    image_bytes, filename = result
+    image_file = discord.File(io.BytesIO(image_bytes), filename=filename)
+    await message.channel.send(f"{card.name}\n{card.scryfall_uri}", file=image_file)
     return
 
   if not message.content.startswith(PREFIX):
