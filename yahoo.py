@@ -89,8 +89,11 @@ def _urls_from_page_text(text):
       yield image_url
 
 
-def _yahoo_mtg_img_urls(command):
-  query = f"+{command} (MTG or マジック or ギャザ or magic) (カード or card)"
+def _yahoo_mtg_img_urls(command, prefer_japanese=False):
+  if prefer_japanese:
+    query = f"+{command} (MTG or マジック or ギャザ or magic) (日本語版 or 日本語 or Japanese) (カード or card)"
+  else:
+    query = f"+{command} (MTG or マジック or ギャザ or magic) (カード or card)"
   params = {
     "p": query,
     "ei": "UTF-8",
@@ -205,26 +208,34 @@ def _is_card_aspect_ratio(image_bytes):
 
 def download_first_yahoo_mtg_image(command):
   try:
-    image_urls = _yahoo_mtg_img_urls(command)
+    image_urls = _yahoo_mtg_img_urls(command, prefer_japanese=True)
 
-    for image_url in image_urls:
-      try:
-        response = requests.get(image_url, headers=HEADERS, timeout=20)
-        response.raise_for_status()
-      except requests.RequestException:
-        continue
+    result = _download_first_card_like_image(image_urls)
+    if result is not None:
+      return result
 
-      content_type = response.headers.get("content-type", "")
-      if not content_type.startswith("image/"):
-        continue
-
-      if not _is_card_aspect_ratio(response.content):
-        continue
-
-      extension = _extension_from_response(response)
-      return response.content, f"mtg_image{extension}"
+    return _download_first_card_like_image(_yahoo_mtg_img_urls(command))
   except requests.RequestException:
     return None
+
+
+def _download_first_card_like_image(image_urls):
+  for image_url in image_urls:
+    try:
+      response = requests.get(image_url, headers=HEADERS, timeout=20)
+      response.raise_for_status()
+    except requests.RequestException:
+      continue
+
+    content_type = response.headers.get("content-type", "")
+    if not content_type.startswith("image/"):
+      continue
+
+    if not _is_card_aspect_ratio(response.content):
+      continue
+
+    extension = _extension_from_response(response)
+    return response.content, f"mtg_image{extension}"
 
   return None
 

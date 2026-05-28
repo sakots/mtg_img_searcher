@@ -44,8 +44,11 @@ async def on_ready():
   print(f"Logged in as {client.user} ({client.user.id})")
 
 
-def _bing_mtg_img_urls(command):
-  query = f"+{command} (MTG OR マジック OR ギャザ OR magic) (カード OR card)"
+def _bing_mtg_img_urls(command, prefer_japanese=False):
+  if prefer_japanese:
+    query = f"+{command} (MTG OR マジック OR ギャザ OR magic) (日本語版 OR 日本語 OR Japanese) (カード OR card)"
+  else:
+    query = f"+{command} (MTG OR マジック OR ギャザ OR magic) (カード OR card)"
   params = {
     "q": query,
     "qft": "+filterui:aspect-tall",
@@ -154,26 +157,34 @@ def _is_card_aspect_ratio(image_bytes):
 
 def download_first_bing_mtg_image(command):
   try:
-    image_urls = _bing_mtg_img_urls(command)
+    image_urls = _bing_mtg_img_urls(command, prefer_japanese=True)
 
-    for image_url in image_urls:
-      try:
-        response = requests.get(image_url, headers=HEADERS, timeout=20)
-        response.raise_for_status()
-      except requests.RequestException:
-        continue
+    result = _download_first_card_like_image(image_urls)
+    if result is not None:
+      return result
 
-      content_type = response.headers.get("content-type", "")
-      if not content_type.startswith("image/"):
-        continue
-
-      if not _is_card_aspect_ratio(response.content):
-        continue
-
-      extension = _extension_from_response(response)
-      return response.content, f"mtg_image{extension}"
+    return _download_first_card_like_image(_bing_mtg_img_urls(command))
   except requests.RequestException:
     return None
+
+
+def _download_first_card_like_image(image_urls):
+  for image_url in image_urls:
+    try:
+      response = requests.get(image_url, headers=HEADERS, timeout=20)
+      response.raise_for_status()
+    except requests.RequestException:
+      continue
+
+    content_type = response.headers.get("content-type", "")
+    if not content_type.startswith("image/"):
+      continue
+
+    if not _is_card_aspect_ratio(response.content):
+      continue
+
+    extension = _extension_from_response(response)
+    return response.content, f"mtg_image{extension}"
 
   return None
 
