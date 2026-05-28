@@ -13,7 +13,7 @@ yahoo検索バージョンではおっぱいチャレンジ成功
 ## 使い方
 
 1. `uv add discord.py bs4 urllib3 python-dotenv requests pillow`
-2. `.env`ファイルを作成し、`TOKEN=(ここにDiscordのBotトークンを入れる)`のように作成してください
+2. `.env`ファイルを`TOKEN=(ここにDiscordのBotトークンを入れる)`のように作成してください
 3. Discord Developer Portal の Bot 設定で `MESSAGE CONTENT INTENT` をONにしてください。
 
 起動:
@@ -36,7 +36,17 @@ uv run python yahoo.py
 
 画像を添付してBotにメンションすると、Scryfallのカード画像から見た目が近いカードを返します。
 
-初回だけ `.cache/scryfall_image_hashes.json` を作るため、Scryfallからカード画像を取得します。時間がかかりますが、2回目以降はキャッシュを使います。キャッシュを作り直したいときは `.cache` を削除してください。
+初回だけ `.cache/scryfall_image_hashes.json` を作るため、Scryfallからカード画像を取得します。画像メンション検索を呼んだ時点で `.cache` が作られ、処理中も定期的に保存されます。2回目以降はキャッシュを使います。キャッシュを作り直したいときは `.cache` を削除してください。
+
+初回作成を速くするため、デフォルトでは先頭1500件だけキャッシュします。件数や並列数は `.env` で変更できます。
+
+```env
+TOKEN=(ここにDiscordのBotトークンを入れる)
+MTG_CACHE_TARGET=1500
+MTG_CACHE_WORKERS=8
+```
+
+精度優先で全件作りたい場合は `MTG_CACHE_TARGET=all` にしてください。
 
 ## こうしんりれき
 

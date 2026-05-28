@@ -1,6 +1,8 @@
 import io
 import json
+import os
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -21,6 +23,9 @@ HASH_SIZE = 8
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
 MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
 SCRYFALL_BULK_TYPE = "unique_artwork"
+DEFAULT_CACHE_TARGET = 1500
+DEFAULT_CACHE_WORKERS = 8
+CACHE_SAVE_INTERVAL = 100
 
 
 @dataclass
@@ -85,40 +90,76 @@ def _load_or_build_cache():
   CACHE_DIR.mkdir(exist_ok=True)
   _write_cache([], complete=False)
 
-  cards = _download_scryfall_cards()
+  card_images = _unique_card_images(_download_scryfall_cards())
+  cache_target = _cache_target()
+  if cache_target is not None:
+    card_images = card_images[:cache_target]
+
   entries = []
-  seen = set()
-  for card in cards:
-    for card_image in _card_images(card):
-      cache_key = (card_image["name"], card_image["image_url"])
-      if cache_key in seen:
-        continue
-      seen.add(cache_key)
-
-      try:
-        image_bytes = _download_image(card_image["image_url"])
-        hashes = _image_hashes(image_bytes)
-      except (OSError, requests.RequestException, ValueError):
+  with ThreadPoolExecutor(max_workers=_cache_workers()) as executor:
+    futures = [executor.submit(_cache_entry_from_card_image, card_image) for card_image in card_images]
+    for future in as_completed(futures):
+      entry = future.result()
+      if entry is None:
         continue
 
-      entries.append({
-        "name": card_image["name"],
-        "scryfall_uri": card_image["scryfall_uri"],
-        "image_url": card_image["image_url"],
-        "ahash": hashes["ahash"],
-        "dhash": hashes["dhash"],
-      })
-
-      if len(entries) % 250 == 0:
+      entries.append(entry)
+      if len(entries) % CACHE_SAVE_INTERVAL == 0:
+        print(f"MTG image cache: {len(entries)}/{len(card_images)}")
         _write_cache(entries, complete=False)
-
-      time.sleep(0.05)
 
   if not entries and CACHE_PATH.exists():
     return json.loads(CACHE_PATH.read_text(encoding="utf-8"))["cards"]
 
   _write_cache(entries, complete=True)
   return entries
+
+
+def _cache_target():
+  value = os.getenv("MTG_CACHE_TARGET", str(DEFAULT_CACHE_TARGET)).strip()
+  if value.lower() in {"", "all", "none", "0"}:
+    return None
+
+  try:
+    return max(1, int(value))
+  except ValueError:
+    return DEFAULT_CACHE_TARGET
+
+
+def _cache_workers():
+  try:
+    return max(1, int(os.getenv("MTG_CACHE_WORKERS", str(DEFAULT_CACHE_WORKERS))))
+  except ValueError:
+    return DEFAULT_CACHE_WORKERS
+
+
+def _unique_card_images(cards):
+  card_images = []
+  seen = set()
+  for card in cards:
+    for card_image in _card_images(card):
+      cache_key = (card_image["name"], card_image["hash_image_url"])
+      if cache_key in seen:
+        continue
+      seen.add(cache_key)
+      card_images.append(card_image)
+  return card_images
+
+
+def _cache_entry_from_card_image(card_image):
+  try:
+    image_bytes = _download_image(card_image["hash_image_url"])
+    hashes = _image_hashes(image_bytes)
+  except (OSError, requests.RequestException, ValueError):
+    return None
+
+  return {
+    "name": card_image["name"],
+    "scryfall_uri": card_image["scryfall_uri"],
+    "image_url": card_image["image_url"],
+    "ahash": hashes["ahash"],
+    "dhash": hashes["dhash"],
+  }
 
 
 def _write_cache(entries, complete):
@@ -147,10 +188,9 @@ def _download_scryfall_cards():
   response = requests.get(SCRYFALL_BULK_DATA_URL, headers=HEADERS, timeout=20)
   response.raise_for_status()
   bulk_items = response.json()["data"]
-  bulk_data = next(
-    (item for item in bulk_items if item["type"] == SCRYFALL_BULK_TYPE),
-    next(item for item in bulk_items if item["type"] == "default_cards"),
-  )
+  bulk_data = next((item for item in bulk_items if item["type"] == SCRYFALL_BULK_TYPE), None)
+  if bulk_data is None:
+    bulk_data = next(item for item in bulk_items if item["type"] == "default_cards")
 
   response = requests.get(bulk_data["download_uri"], headers=HEADERS, timeout=120)
   response.raise_for_status()
@@ -160,12 +200,14 @@ def _download_scryfall_cards():
 def _card_images(card):
   scryfall_uri = card.get("scryfall_uri", "")
   if "image_uris" in card:
-    image_url = card["image_uris"].get("small") or card["image_uris"].get("normal")
-    if image_url:
+    hash_image_url = card["image_uris"].get("small") or card["image_uris"].get("normal")
+    image_url = card["image_uris"].get("normal") or hash_image_url
+    if hash_image_url and image_url:
       yield {
         "name": card.get("name", "Unknown"),
         "scryfall_uri": scryfall_uri,
         "image_url": image_url,
+        "hash_image_url": hash_image_url,
       }
     return
 
@@ -174,12 +216,14 @@ def _card_images(card):
     if not image_uris:
       continue
 
-    image_url = image_uris.get("small") or image_uris.get("normal")
-    if image_url:
+    hash_image_url = image_uris.get("small") or image_uris.get("normal")
+    image_url = image_uris.get("normal") or hash_image_url
+    if hash_image_url and image_url:
       yield {
         "name": face.get("name") or card.get("name", "Unknown"),
         "scryfall_uri": scryfall_uri,
         "image_url": image_url,
+        "hash_image_url": hash_image_url,
       }
 
 
