@@ -1,6 +1,5 @@
 import io
 import json
-import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -83,6 +82,9 @@ def _load_or_build_cache():
   if _cache_is_fresh():
     return json.loads(CACHE_PATH.read_text(encoding="utf-8"))["cards"]
 
+  CACHE_DIR.mkdir(exist_ok=True)
+  _write_cache([], complete=False)
+
   cards = _download_scryfall_cards()
   entries = []
   seen = set()
@@ -106,17 +108,26 @@ def _load_or_build_cache():
         "ahash": hashes["ahash"],
         "dhash": hashes["dhash"],
       })
+
+      if len(entries) % 250 == 0:
+        _write_cache(entries, complete=False)
+
       time.sleep(0.05)
 
   if not entries and CACHE_PATH.exists():
     return json.loads(CACHE_PATH.read_text(encoding="utf-8"))["cards"]
 
+  _write_cache(entries, complete=True)
+  return entries
+
+
+def _write_cache(entries, complete):
   CACHE_DIR.mkdir(exist_ok=True)
   CACHE_PATH.write_text(json.dumps({
     "created_at": int(time.time()),
+    "complete": complete,
     "cards": entries,
   }, ensure_ascii=False), encoding="utf-8")
-  return entries
 
 
 def _cache_is_fresh():

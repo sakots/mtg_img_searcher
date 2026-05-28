@@ -193,7 +193,8 @@ async def on_message(message):
           result = await asyncio.to_thread(download_card_image, card)
         else:
           result = None
-      except (ValueError, requests.RequestException, OSError):
+      except (ValueError, requests.RequestException, OSError) as error:
+        print(f"Image similarity search failed: {error}")
         result = None
 
     if result is None:
