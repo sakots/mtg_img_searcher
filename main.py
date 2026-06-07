@@ -10,7 +10,7 @@ import requests
 from dotenv import load_dotenv
 from mtg_image_similarity import (
   download_card_image,
-  find_similar_card,
+  find_similar_cards,
   is_image_attachment,
   read_image_attachment,
 )
@@ -20,6 +20,7 @@ load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
 PREFIX = ">>"
+SIMILAR_CARD_RESULTS = 3
 
 HEADERS = {
   "User-Agent": (
@@ -199,9 +200,9 @@ async def on_message(message):
     async with message.channel.typing():
       try:
         image_bytes = await read_image_attachment(image_attachments[0])
-        card = await asyncio.to_thread(find_similar_card, image_bytes)
-        if card is not None:
-          result = await asyncio.to_thread(download_card_image, card)
+        cards = await asyncio.to_thread(find_similar_cards, image_bytes, SIMILAR_CARD_RESULTS)
+        if cards:
+          result = await asyncio.to_thread(download_card_image, cards[0])
         else:
           result = None
       except (ValueError, requests.RequestException, OSError) as error:
@@ -214,7 +215,11 @@ async def on_message(message):
 
     image_bytes, filename = result
     image_file = discord.File(io.BytesIO(image_bytes), filename=filename)
-    await message.channel.send(f"{card.name}\n{card.scryfall_uri}", file=image_file)
+    matches = "\n".join(
+      f"{index}. {card.name} ({card.similarity:.0%})\n{card.scryfall_uri}"
+      for index, card in enumerate(cards, start=1)
+    )
+    await message.channel.send(matches, file=image_file)
     return
 
   if not message.content.startswith(PREFIX):

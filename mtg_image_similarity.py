@@ -35,6 +35,11 @@ class SimilarCard:
   scryfall_uri: str
   distance: int
 
+  @property
+  def similarity(self):
+    max_distance = HASH_SIZE * HASH_SIZE * 2
+    return max(0.0, 1.0 - (self.distance / max_distance))
+
 
 def is_image_attachment(attachment):
   content_type = attachment.content_type or ""
@@ -52,29 +57,36 @@ async def read_image_attachment(attachment):
 
 
 def find_similar_card(image_bytes):
+  cards = find_similar_cards(image_bytes, top_n=1)
+  if not cards:
+    return None
+
+  return cards[0]
+
+
+def find_similar_cards(image_bytes, top_n=5):
   target_hashes = _image_hashes(image_bytes)
   entries = _load_or_build_cache()
 
-  best_entry = None
-  best_distance = None
+  ranked_entries = []
   for entry in entries:
     distance = min(
       _hamming_distance(target_hashes["ahash"], entry["ahash"]) + _hamming_distance(target_hashes["dhash"], entry["dhash"]),
       _hamming_distance(target_hashes["crop_ahash"], entry["ahash"]) + _hamming_distance(target_hashes["crop_dhash"], entry["dhash"]),
     )
-    if best_distance is None or distance < best_distance:
-      best_distance = distance
-      best_entry = entry
+    ranked_entries.append((distance, entry))
 
-  if best_entry is None:
-    return None
+  ranked_entries.sort(key=lambda item: item[0])
 
-  return SimilarCard(
-    name=best_entry["name"],
-    image_url=best_entry["image_url"],
-    scryfall_uri=best_entry["scryfall_uri"],
-    distance=best_distance,
-  )
+  return [
+    SimilarCard(
+      name=entry["name"],
+      image_url=entry["image_url"],
+      scryfall_uri=entry["scryfall_uri"],
+      distance=distance,
+    )
+    for distance, entry in ranked_entries[:max(1, top_n)]
+  ]
 
 
 def download_card_image(card):
